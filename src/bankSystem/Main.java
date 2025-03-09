@@ -56,7 +56,7 @@ public class Main {
     // Afișarea cursului valutar
     private static void displayExchangeRates() {
         for (Map.Entry<String, Double> entry : exchangeRates.entrySet()) {
-            System.out.printf("   %s - %.2f RON%n", entry.getKey(), entry.getValue());
+            System.out.printf("   %s - %.2f MDL%n", entry.getKey(), entry.getValue());
         }
     }
 
@@ -142,6 +142,7 @@ public class Main {
     private static void authenticateClient(Scanner scanner){
         boolean validCard = false;
         String cardNumber = "";
+        int attemps = 0;
 
         while (!validCard){
             System.out.printf("%nIntroduceti numarul cardului: ");
@@ -154,19 +155,23 @@ public class Main {
             }
         }
 
-        System.out.printf("Introduceti parola:");
-        String password = scanner.nextLine();
-
         BankAccount account = bankManager.findAccount(cardNumber);
 
-        if(account != null && account.verifyPassword(password)){
-            System.out.printf("%nAutentificare reusita! %n");
-            openClientMenu(scanner,account);
-        }
-        else {
-            System.out.printf("%nAutentificare esuata! Introduceti datele corecte.%n");
+        while (attemps < 3){
+            System.out.printf("Introduceti parola:");
+            String password = scanner.nextLine();
+            if( account.verifyPassword(password)){
+                System.out.printf("%nAutentificare reusita! %n");
+                openClientMenu(scanner,account);
+                return;
+            }
+            else {
+                attemps++;
+                System.out.printf("%nParola incorecta! Incercare %d din 3.%n",attemps);
+            }
         }
 
+            System.out.printf("%nAutentificare esuata! Introduceti datele corecte.%n");
 
     }
 
@@ -188,17 +193,22 @@ public class Main {
 
             switch (option){
                 case 1:
-                    System.out.printf("%nSoldul actyal: %.2f MDL%n",bankAccount.getBalance());
+                    System.out.printf("%nSoldul actual: %.2f MDL%n",bankAccount.getBalance("MDL"));
+                    bankAccount.displayBalances();
                     break;
                 case 2:
-                    System.out.printf("Introduceti suma de a depune: ");
+                    System.out.printf("Introduceti suma si moneda de a depune: ");
                     double depositAmount = scanner.nextDouble();
-                    bankAccount.deposit(depositAmount);
+                    String depositCurrency = scanner.next().toUpperCase();
+                    scanner.nextLine();
+                    bankAccount.deposit(depositCurrency,depositAmount);
                     break;
                 case 3:
-                    System.out.printf("Introduceti suma de a retrage: ");
+                    System.out.printf("Introduceti suma si moneda de a retrage: ");
                     double withdrawAmount = scanner.nextDouble();
-                    bankAccount.withdraw(withdrawAmount);
+                    String withdrawCurrency = scanner.next().toUpperCase();
+                    scanner.nextLine();
+                    bankAccount.withdraw(withdrawCurrency,withdrawAmount);
                     break;
                 case 4:
                     performCurrencyExchange(scanner,bankAccount);
@@ -213,36 +223,74 @@ public class Main {
         }
     }
 
-}
+    //schimbul valutar
+    private static void performCurrencyExchange(Scanner scanner, BankAccount bankAccount) {
+        System.out.printf("%nCursul valutar actual: %n");
+        displayExchangeRates();
 
+        System.out.printf("%nIntroduceți suma și moneda pe care doriți să o schimbați (ex: 34 EUR): ");
 
+        // Citire corectă a sumei și monedei
+        double amount = scanner.nextDouble();
+        String fromCurrency = scanner.next().toUpperCase();
 
+        // Verificăm dacă moneda introdusă este validă
+        if (!exchangeRates.containsKey(fromCurrency) && !fromCurrency.equals("MDL")) {
+            System.out.printf("%nMoneda introdusă nu este suportată.%n");
+            return;
+        }
 
+        System.out.printf("%nIntroduceți moneda în care doriți să schimbați: ");
+        String toCurrency = scanner.next().toUpperCase();
 
+        if (!exchangeRates.containsKey(toCurrency)) {
+            System.out.printf("%nMoneda introdusă nu este suportată.%n");
+            return;
+        }
 
+        // Verificare fonduri și conversie
+        if (bankAccount.getBalance(fromCurrency) >= amount) {
+            // Conversie normală dacă există fonduri suficiente în moneda inițială
+            double exchangeAmount = (fromCurrency.equals("MDL")) ?
+                    amount / exchangeRates.get(toCurrency) :
+                    (amount * exchangeRates.get(fromCurrency)) / exchangeRates.get(toCurrency);
 
+            System.out.printf("%nConfirmati schimbul: %.2f %s -> %.2f %s (Da/Nu): ", amount, fromCurrency, exchangeAmount, toCurrency);
+            scanner.nextLine();
+            String confirmation = scanner.nextLine().toUpperCase();
 
+            if (confirmation.equals("DA")) {
+                bankAccount.withdraw(fromCurrency, amount);
+                bankAccount.addCurrency(toCurrency, exchangeAmount);
+                System.out.printf("%nSchimb valutar reușit. Ați primit %.2f %s.%n", exchangeAmount, toCurrency);
+                bankAccount.displayBalances();
+            } else {
+                System.out.printf("%nSchimbul a fost anulat.%n");
+            }
+        } else if (fromCurrency.equals("MDL")) {
+            // Dacă utilizatorul vrea să cumpere o altă monedă cu MDL
+            double requiredMDL = amount * exchangeRates.get(toCurrency);
+            if (bankAccount.getBalance("MDL") >= requiredMDL) {
+                System.out.printf("%nConfirmati schimbul: %.2f MDL -> %.2f %s (Da/Nu): ", requiredMDL, amount, toCurrency);
+                scanner.nextLine();
+                String confirmation = scanner.nextLine().toUpperCase();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                if (confirmation.equals("DA")) {
+                    bankAccount.withdraw("MDL", requiredMDL);
+                    bankAccount.addCurrency(toCurrency, amount);
+                    System.out.printf("%nSchimb valutar reușit. Ați primit %.2f %s.%n", amount, toCurrency);
+                    bankAccount.displayBalances();
+                } else {
+                    System.out.printf("%nSchimbul a fost anulat.%n");
+                }
+            } else {
+                System.out.printf("%nFonduri insuficiente. Aveți nevoie de %.2f MDL.%n", requiredMDL);
+            }
+        } else {
+            System.out.printf("%nFonduri insuficiente.%n");
+        }
+    }
+        }
 
 
 

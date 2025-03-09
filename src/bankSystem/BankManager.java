@@ -15,10 +15,12 @@ public class BankManager {
         System.out.printf("Introduceti parola contuluiu:");
         String password = scanner.nextLine();
 
-        System.out.printf("Introduceti soldul actual:");
-        double balance = scanner.nextDouble();
+        System.out.printf("Introduceti soldul initial:");
+        double initialBalance = scanner.nextDouble();
+        scanner.nextLine();
 
-        accounts.add(new BankAccount(accountNumber,password,balance));
+        BankAccount newAccount = new BankAccount(accountNumber,password,initialBalance);
+        accounts.add(newAccount);
         System.out.printf("%nContul a fost adaugat cu succes!%n");
     }
 
@@ -31,7 +33,7 @@ public class BankManager {
         System.out.printf("%nLista conturilor bancare:%n");
         for (BankAccount account:
              accounts) {
-            System.out.printf("Numar cont: %s | Sold: %.2f MDL%n",account.getAccountNumber(),account.getBalance());
+            System.out.printf("Numar cont: %s | Sold: %.2f MDL%n",account.getAccountNumber());
         }
     }
 
@@ -42,7 +44,7 @@ public class BankManager {
         for (BankAccount account:
              accounts) {
             if(account.getAccountNumber().equals(accountNumber)){
-                System.out.printf("%nCont gasit. Numar cont %s | Sold %.2f MDL%n",account.getAccountNumber(),account.getBalance());
+                System.out.printf("%nCont gasit. Numar cont %s | Sold %.2f MDL%n",account.getAccountNumber());
                 return;
             }
             System.out.printf("%nContul: %s  nu este inregistrat",account.getAccountNumber());
