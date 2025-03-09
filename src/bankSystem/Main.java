@@ -38,7 +38,7 @@ public class Main {
 
             switch (option){
                 case 1:
-                    System.out.printf("%nAutentificare");
+                    authenticateClient(scanner);
                     break;
                 case 2:
                     authenticateManager(scanner);
@@ -170,4 +170,80 @@ public class Main {
 
     }
 
+    //meniul clientului
+    private static void openClientMenu(Scanner scanner,BankAccount bankAccount){
+        boolean running = true;
+
+        while (running){
+            System.out.printf("%n======= Meniu Client =======");
+            System.out.printf("1. Afisare sold.%n");
+            System.out.printf("2. Depunere bani.%n");
+            System.out.printf("3. Retragere bani.%n");
+            System.out.printf("4. Schimb valutar.%n");
+            System.out.printf("5. EXIT.%n");
+            System.out.print("Alegeti o optiune:");
+
+            int option = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (option){
+                case 1:
+                    System.out.printf("%nSoldul actyal: %.2f MDL%n",bankAccount.getBalance());
+                    break;
+                case 2:
+                    System.out.printf("Introduceti suma de a depune: ");
+                    double depositAmount = scanner.nextDouble();
+                    bankAccount.deposit(depositAmount);
+                    break;
+                case 3:
+                    System.out.printf("Introduceti suma de a retrage: ");
+                    double withdrawAmount = scanner.nextDouble();
+                    bankAccount.withdraw(withdrawAmount);
+                    break;
+                case 4:
+                    performCurrencyExchange(scanner,bankAccount);
+                    break;
+                case 5:
+                    System.out.printf("%nDeconectare reusita!%n");
+                    running = false;
+                    break;
+                default:
+                    System.out.printf("%nOptiune invalida! Incercati din nou!");
+            }
+        }
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
