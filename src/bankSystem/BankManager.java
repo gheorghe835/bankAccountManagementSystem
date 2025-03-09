@@ -49,4 +49,12 @@ public class BankManager {
         }
     }
 
+    //metoda de stergere a contului
+    public void deleteAccount(Scanner scanner){
+        System.out.printf("%nIntroduceti numarul contului de sters: ");
+        String accountNumber = scanner.nextLine();
+        accounts.removeIf(account -> account.getAccountNumber().equals(accountNumber));
+        System.out.printf("%nContul a fost sters cu succes. %n");
+    }
+
 }

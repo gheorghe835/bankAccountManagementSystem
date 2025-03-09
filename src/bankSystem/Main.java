@@ -112,7 +112,7 @@ public class Main {
                     bankManager.searchAccount(scanner);
                     break;
                 case 4:
-                    System.out.printf("%n[Ștergere Cont] - Funcționalitatea urmează să fie implementată.%n");
+                    bankManager.deleteAccount(scanner);
                     break;
                 case 5:
                     updateExchangeRates(scanner);
