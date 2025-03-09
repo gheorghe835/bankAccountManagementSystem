@@ -34,4 +34,8 @@ public class BankAccount {
     public void setBalance(double balance) {
         this.balance = balance;
     }
+
+    public boolean verifyPassword(String inputPassword){
+        return this.password.equals(inputPassword);
+    }
 }

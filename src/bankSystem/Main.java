@@ -138,4 +138,36 @@ public class Main {
         System.out.printf("%nCursul valutar a fost actualizat cu succes!%n");
     }
 
+    //autentificarea clientului
+    private static void authenticateClient(Scanner scanner){
+        boolean validCard = false;
+        String cardNumber = "";
+
+        while (!validCard){
+            System.out.printf("%nIntroduceti numarul cardului: ");
+            cardNumber = scanner.nextLine();
+            if (bankManager.findAccount(cardNumber) == null){
+                System.out.printf("%nNumarul cardului este invalid! Introduceti corect datele!%n");
+            }
+            else {
+                validCard = true;
+            }
+        }
+
+        System.out.printf("Introduceti parola:");
+        String password = scanner.nextLine();
+
+        BankAccount account = bankManager.findAccount(cardNumber);
+
+        if(account != null && account.verifyPassword(password)){
+            System.out.printf("%nAutentificare reusita! %n");
+            openClientMenu(scanner,account);
+        }
+        else {
+            System.out.printf("%nAutentificare esuata! Introduceti datele corecte.%n");
+        }
+
+
+    }
+
 }

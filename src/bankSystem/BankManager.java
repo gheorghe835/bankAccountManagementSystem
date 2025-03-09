@@ -57,4 +57,15 @@ public class BankManager {
         System.out.printf("%nContul a fost sters cu succes. %n");
     }
 
+    //metoda de cautare a numarului cardului
+    public BankAccount findAccount(String cardNumber){
+        for (BankAccount account:
+             accounts) {
+            if (account.getAccountNumber().equals(cardNumber)){
+                return account;
+            }
+        }
+        return null;
+    }
+
 }
