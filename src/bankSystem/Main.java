@@ -11,7 +11,7 @@ public class Main {
     private static final BankManager bankManager = new BankManager();
     // Simulăm cursul valutar
     static  {
-        exchangeRates.put("EURO",19.45);
+        exchangeRates.put("EUR",19.45);
         exchangeRates.put("USD",18.5);
         exchangeRates.put("GBP",22.1);
     }
@@ -28,9 +28,9 @@ public class Main {
             displayExchangeRates();
             System.out.println("\n====================================");
             //meniul principal
-            System.out.printf("%n1. ClientAccount.%n");
-            System.out.printf("2. Manager.%n");
-            System.out.printf("3. Iesire%n");
+            System.out.printf("%n1. Introduceti datele:.%n");
+            System.out.printf("2. Iesire din aplicatie.%n");
+            //System.out.printf("3. Iesire%n");
             System.out.print("Alegeti o optiune.");
 
             int option = scanner.nextInt();
@@ -41,11 +41,11 @@ public class Main {
                     authenticateClient(scanner);
                     break;
                 case 2:
-                    authenticateManager(scanner);
-                    break;
-                case 3:
                     System.out.printf("%nMulțumim că ați vizitat Banca Comercială. O zi frumoasă!%n");
                     running = false;
+                    break;
+                case 9:
+                    authenticateManager(scanner);
                     break;
                 default:
                     System.out.printf("%nOpțiune invalidă! Vă rugăm să alegeți din nou.%n");
@@ -62,8 +62,8 @@ public class Main {
 
     // Autentificarea managerului
     private static void authenticateManager(Scanner scanner) {
-        final String MANAGER_USERNAME = "admin";
-        final String MANAGER_PASSWORD = "1234";
+        final String MANAGER_USERNAME = "a";
+        final String MANAGER_PASSWORD = "1";
         int attempts = 0;
 
         while (attempts < 3) {
@@ -139,40 +139,37 @@ public class Main {
     }
 
     //autentificarea clientului
-    private static void authenticateClient(Scanner scanner){
+    private static void authenticateClient(Scanner scanner) {
         boolean validCard = false;
         String cardNumber = "";
-        int attemps = 0;
+        int attempts = 0;
 
-        while (!validCard){
-            System.out.printf("%nIntroduceti numarul cardului: ");
+        while (!validCard && attempts < 3) {
+            System.out.printf("%nIntroduceți numărul cardului: ");
             cardNumber = scanner.nextLine();
-            if (bankManager.findAccount(cardNumber) == null){
-                System.out.printf("%nNumarul cardului este invalid! Introduceti corect datele!%n");
-            }
-            else {
+            if (bankManager.findAccount(cardNumber) == null) {
+                attempts++;
+                System.out.printf("%nNumărul cardului este invalid! Încercare %d din 3.%n", attempts);
+            } else {
                 validCard = true;
             }
         }
 
-        BankAccount account = bankManager.findAccount(cardNumber);
-
-        while (attemps < 3){
-            System.out.printf("Introduceti parola:");
-            String password = scanner.nextLine();
-            if( account.verifyPassword(password)){
-                System.out.printf("%nAutentificare reusita! %n");
-                openClientMenu(scanner,account);
-                return;
-            }
-            else {
-                attemps++;
-                System.out.printf("%nParola incorecta! Incercare %d din 3.%n",attemps);
-            }
+        if (!validCard) {
+            System.out.printf("%nAutentificare eșuată! Ați depășit numărul maxim de încercări.%n");
+            return;
         }
 
-            System.out.printf("%nAutentificare esuata! Introduceti datele corecte.%n");
+        System.out.printf("Introduceți parola: ");
+        String password = scanner.nextLine();
+        BankAccount account = bankManager.findAccount(cardNumber);
 
+        if (account != null && account.verifyPassword(password)) {
+            System.out.printf("%nAutentificare reușită!%n");
+            openClientMenu(scanner, account);
+        } else {
+            System.out.printf("%nAutentificare eșuată! Introduceți datele corecte.%n");
+        }
     }
 
     //meniul clientului
@@ -180,7 +177,7 @@ public class Main {
         boolean running = true;
 
         while (running){
-            System.out.printf("%n======= Meniu Client =======");
+            System.out.printf("%n======= Meniu Client =======%n");
             System.out.printf("1. Afisare sold.%n");
             System.out.printf("2. Depunere bani.%n");
             System.out.printf("3. Retragere bani.%n");
@@ -211,7 +208,7 @@ public class Main {
                     bankAccount.withdraw(withdrawCurrency,withdrawAmount);
                     break;
                 case 4:
-                    performCurrencyExchange(scanner,bankAccount);
+                    currencyMenu(scanner,bankAccount);
                     break;
                 case 5:
                     System.out.printf("%nDeconectare reusita!%n");
@@ -223,74 +220,115 @@ public class Main {
         }
     }
 
+    private static void currencyMenu(Scanner scanner, BankAccount bankAccount) {
+        boolean running = true;
+        while (running) {
+            System.out.printf("%n======= Meniu Schimb Valutar =======%n");
+            System.out.printf("1. Schimb valutar%n");
+            System.out.printf("2. Cumpărare valută%n");
+            System.out.printf("3. Înapoi la meniul client%n");
+            System.out.print("Alegeți o opțiune: ");
+
+            int option = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (option) {
+                case 1:
+                    performCurrencyExchange(scanner, bankAccount);
+                    break;
+                case 2:
+                    buyCurrency(scanner, bankAccount);
+                    break;
+                case 3:
+                    running = false;
+                    break;
+                default:
+                    System.out.printf("%nOpțiune invalidă! Vă rugăm să alegeți din nou.%n");
+            }
+        }
+    }
+
     //schimbul valutar
+    private static void buyCurrency(Scanner scanner, BankAccount bankAccount) {
+        System.out.printf("%nIntroduceți moneda pe care doriți să o cumpărați: ");
+        String currency = scanner.next().trim().toUpperCase();
+
+        if (!exchangeRates.containsKey(currency)) {
+            System.out.printf("%nMoneda introdusă nu este suportată.%n");
+            return;
+        }
+
+        System.out.printf("%nIntroduceți suma de %s pe care doriți să o cumpărați: ", currency);
+        double amount = scanner.nextDouble();
+        scanner.nextLine();
+
+        double requiredMDL = amount * exchangeRates.get(currency);
+
+        if (bankAccount.getBalance("MDL") >= requiredMDL) {
+            System.out.printf("%nConfirmati cumpărarea: %.2f MDL -> %.2f %s (Da/Nu): ", requiredMDL, amount, currency);
+            String confirmation = scanner.nextLine().trim().toUpperCase();
+
+            if (confirmation.equals("DA")) {
+                bankAccount.withdraw("MDL", requiredMDL);
+                bankAccount.addCurrency(currency, amount);
+                System.out.printf("%nCumpărare reușită. Ați primit %.2f %s.%n", amount, currency);
+                bankAccount.displayBalances();
+            } else {
+                System.out.printf("%nCumpărarea a fost anulată.%n");
+            }
+        } else {
+            System.out.printf("%nFonduri insuficiente. Aveți nevoie de %.2f MDL.%n", requiredMDL);
+        }
+    }
+
     private static void performCurrencyExchange(Scanner scanner, BankAccount bankAccount) {
         System.out.printf("%nCursul valutar actual: %n");
         displayExchangeRates();
 
         System.out.printf("%nIntroduceți suma și moneda pe care doriți să o schimbați (ex: 34 EUR): ");
-
-        // Citire corectă a sumei și monedei
         double amount = scanner.nextDouble();
-        String fromCurrency = scanner.next().toUpperCase();
+        String fromCurrency = scanner.next().trim().toUpperCase();
 
-        // Verificăm dacă moneda introdusă este validă
         if (!exchangeRates.containsKey(fromCurrency) && !fromCurrency.equals("MDL")) {
             System.out.printf("%nMoneda introdusă nu este suportată.%n");
             return;
         }
 
         System.out.printf("%nIntroduceți moneda în care doriți să schimbați: ");
-        String toCurrency = scanner.next().toUpperCase();
+        String toCurrency = scanner.next().trim().toUpperCase();
 
-        if (!exchangeRates.containsKey(toCurrency)) {
+        if (!exchangeRates.containsKey(toCurrency) && !toCurrency.equals("MDL")) {
             System.out.printf("%nMoneda introdusă nu este suportată.%n");
             return;
         }
 
-        // Verificare fonduri și conversie
-        if (bankAccount.getBalance(fromCurrency) >= amount) {
-            // Conversie normală dacă există fonduri suficiente în moneda inițială
-            double exchangeAmount = (fromCurrency.equals("MDL")) ?
-                    amount / exchangeRates.get(toCurrency) :
-                    (amount * exchangeRates.get(fromCurrency)) / exchangeRates.get(toCurrency);
-
-            System.out.printf("%nConfirmati schimbul: %.2f %s -> %.2f %s (Da/Nu): ", amount, fromCurrency, exchangeAmount, toCurrency);
-            scanner.nextLine();
-            String confirmation = scanner.nextLine().toUpperCase();
-
-            if (confirmation.equals("DA")) {
-                bankAccount.withdraw(fromCurrency, amount);
-                bankAccount.addCurrency(toCurrency, exchangeAmount);
-                System.out.printf("%nSchimb valutar reușit. Ați primit %.2f %s.%n", exchangeAmount, toCurrency);
-                bankAccount.displayBalances();
-            } else {
-                System.out.printf("%nSchimbul a fost anulat.%n");
-            }
-        } else if (fromCurrency.equals("MDL")) {
-            // Dacă utilizatorul vrea să cumpere o altă monedă cu MDL
-            double requiredMDL = amount * exchangeRates.get(toCurrency);
-            if (bankAccount.getBalance("MDL") >= requiredMDL) {
-                System.out.printf("%nConfirmati schimbul: %.2f MDL -> %.2f %s (Da/Nu): ", requiredMDL, amount, toCurrency);
-                scanner.nextLine();
-                String confirmation = scanner.nextLine().toUpperCase();
-
-                if (confirmation.equals("DA")) {
-                    bankAccount.withdraw("MDL", requiredMDL);
-                    bankAccount.addCurrency(toCurrency, amount);
-                    System.out.printf("%nSchimb valutar reușit. Ați primit %.2f %s.%n", amount, toCurrency);
-                    bankAccount.displayBalances();
-                } else {
-                    System.out.printf("%nSchimbul a fost anulat.%n");
-                }
-            } else {
-                System.out.printf("%nFonduri insuficiente. Aveți nevoie de %.2f MDL.%n", requiredMDL);
-            }
+        double exchangeAmount;
+        if (fromCurrency.equals("MDL")) {
+            exchangeAmount = amount / exchangeRates.get(toCurrency);
+        } else if (toCurrency.equals("MDL")) {
+            exchangeAmount = amount * exchangeRates.get(fromCurrency);
         } else {
-            System.out.printf("%nFonduri insuficiente.%n");
+            exchangeAmount = (amount * exchangeRates.get(fromCurrency)) / exchangeRates.get(toCurrency);
+        }
+
+        System.out.printf("%nConfirmati schimbul: %.2f %s -> %.2f %s (Da/Nu): ", amount, fromCurrency, exchangeAmount, toCurrency);
+        scanner.nextLine();
+        String confirmation = scanner.nextLine().trim().toUpperCase();
+
+        if (confirmation.equals("DA")) {
+            bankAccount.withdraw(fromCurrency, amount);
+            bankAccount.addCurrency(toCurrency, exchangeAmount);
+            System.out.printf("%nSchimb valutar reușit. Ați primit %.2f %s.%n", exchangeAmount, toCurrency);
+            bankAccount.displayBalances();
+        } else {
+            System.out.printf("%nSchimbul a fost anulat.%n");
         }
     }
-        }
+}
+
+
+
+
 
 
 
