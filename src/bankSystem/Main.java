@@ -9,6 +9,8 @@ public class Main {
 
     private static final Map<String,Double> exchangeRates = new HashMap<>();
     private static final BankManager bankManager = new BankManager();
+    private static final Map<String, Integer> failedAttempts = new HashMap<>();
+    private static final Map<String, Long> blockedAccounts = new HashMap<>();
     // Simulăm cursul valutar
     static  {
         exchangeRates.put("EUR",19.45);
@@ -147,11 +149,31 @@ public class Main {
         while (!validCard && attempts < 3) {
             System.out.printf("%nIntroduceți numărul cardului: ");
             cardNumber = scanner.nextLine();
+
+            if (blockedAccounts.containsKey(cardNumber)) {
+                long remainingTime = (blockedAccounts.get(cardNumber) - System.currentTimeMillis()) / 1000;
+                if (remainingTime > 0) {
+                    System.out.printf("%nContul este blocat. Încercați din nou în %d secunde.%n", remainingTime);
+                    return;
+                } else {
+                    blockedAccounts.remove(cardNumber);
+                    failedAttempts.put(cardNumber, 0);
+                }
+            }
+
             if (bankManager.findAccount(cardNumber) == null) {
                 attempts++;
+                failedAttempts.put(cardNumber, failedAttempts.getOrDefault(cardNumber, 0) + 1);
                 System.out.printf("%nNumărul cardului este invalid! Încercare %d din 3.%n", attempts);
+
+                if (failedAttempts.get(cardNumber) >= 3) {
+                    blockedAccounts.put(cardNumber, System.currentTimeMillis() + 30000);
+                    System.out.printf("%nContul a fost blocat timp de 30 secunde.%n");
+                    return;
+                }
             } else {
                 validCard = true;
+                failedAttempts.put(cardNumber, 0);
             }
         }
 
@@ -165,7 +187,9 @@ public class Main {
         BankAccount account = bankManager.findAccount(cardNumber);
 
         if (account != null && account.verifyPassword(password)) {
-            System.out.printf("%nAutentificare reușită!%n");
+            System.out.printf("%nAutentificare reușită! Ultima autentificare: %s%n",
+                    account.getLastLogin() == null ? "Prima autentificare" : account.getLastLogin());
+            account.updateLastLogin();
             openClientMenu(scanner, account);
         } else {
             System.out.printf("%nAutentificare eșuată! Introduceți datele corecte.%n");

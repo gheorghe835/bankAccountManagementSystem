@@ -1,5 +1,7 @@
 package bankSystem;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,6 +9,7 @@ public class BankAccount {
     private String accountNumber;
     private String password;
     private final Map<String,Double> balances;
+    private LocalDateTime lastLogin;
 
     public BankAccount(String accountNumber, String password, double initialBalance) {
         this.accountNumber = accountNumber;
@@ -20,6 +23,13 @@ public class BankAccount {
 
     public String getAccountNumber() {
         return accountNumber;
+    }
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+    public void updateLastLogin(){
+        this.lastLogin = LocalDateTime.now();
     }
 
 
