@@ -104,4 +104,34 @@ public class BankAccount {
             lastResetDate = today;
         }
     }
+
+    //METODELE DE BAZA
+
+    //Deunere
+
+    public boolean deposit(double amount,String currency){
+        if (isActive){
+            System.out.println("Contul este inactiv. Contactati banca.");
+            return false;
+        }
+
+        if(!isValdCurrency(currency)){
+            System.out.println("Moneda nesuportata :: " + currency);
+            return false;
+        }
+
+        if (amount < MINIMUM_DEPOSIT){
+            System.out.printf("Suma minima pentru depunere este %.2f %s%n",MINIMUM_DEPOSIT,currency);
+            return false;
+        }
+
+        double newBalance = balances.get(currency) + amount;
+        balances.put(currency,newBalance);
+
+        addTransaction("Deposit",amount,currency,String.format("Depunere in cont %s",accountNumber));
+
+        System.out.printf("Depunere reusita! Sold %s actual :: %.2f%n",currency,newBalance);
+
+        return true;
+    }
 }
