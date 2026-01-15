@@ -58,4 +58,50 @@ public class BankAccount {
     public BankAccount(String accountNumber,String password,String ownerName){
         this(accountNumber,password,0.0,ownerName);
     }
+
+    //metode private de validare
+    private void validateAccountNumber(String accountNumber){
+        if (accountNumber == null || accountNumber.length() != 16){
+            throw new IllegalArgumentException("Numarul contului trebuie sa aiba 16 caractere.");
+        }
+
+        if (!accountNumber.matches("\\d+")){
+            throw new IllegalArgumentException("Numarul contului trebuie sa contina doar cifre.");
+        }
+    }
+
+    private void validatePassword(String password){
+        if (password == null || password.length() < 6){
+            throw new IllegalArgumentException("Parola trebuie sa aiba minimum 6 caractere.")
+        }
+
+        if (password.matches(".*\\d.*")  || !password.matches(".*[a-zA-Z].*")){
+            throw new IllegalArgumentException("Parola trebuie sa contina litere si cifre.");
+        }
+    }
+
+    private void validateInitialBalance(double balance){
+        if (balance < 0){
+            throw new IllegalArgumentException("Soldul initial nu poate fi negativ.");
+        }
+    }
+
+    private void initializeBalances(double initialBalance){
+        for (String currency : SUPPORTED_CURRENCIES){
+            if (currency.equals("MDL")){
+                balances.put(currency,initialBalance);
+            }
+            else {
+                balances.put(currency,0.0);
+            }
+        }
+    }
+
+    private void resetDailyLimitIfNeeded(){
+        LocalDate today = LocalDate.now();
+        if (!today.equals(lastResetDate)){
+            dailyWithdrawalUsed = 0.0;
+            lastResetDate = today;
+        }
+    }
 }
