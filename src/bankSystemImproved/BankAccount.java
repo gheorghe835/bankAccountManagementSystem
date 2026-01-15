@@ -134,4 +134,51 @@ public class BankAccount {
 
         return true;
     }
+
+    //Retragere
+
+    public boolean withdraw(double amount,String currency){
+        if (!isActive){
+            System.out.println("Contul este inactiv. Contactati banca.");
+            return false;
+        }
+
+        if (!isValidCurrency(currency)){
+            System.out.println("Moneda nesuportata :: " + currency);
+            return false;
+        }
+
+        if (amount <= 0){
+            System.out.println("Suma trebuie sa fie pozitiva.");
+            return false;
+        }
+
+        resetDailyLimitIfNeeded();
+
+        //verifica limita zilnica
+        double amountInMDL = convertToMDL(amount,currency);
+        if (dailyWithdrawalUsed + amountInMDL > dailyWithdrawalLimit){
+            System.out.printf("Limita zilnica de retragere depasita. " + "Mai aveti disponibil :: " +
+                    "%.2f MDL%n",dailyWithdrawalLimit - dailyWithdrawalUsed);
+            return false;
+        }
+
+        //verifica soldul
+        double currentBalance = balances.getOrDefault(currency,0.0);
+        if (currentBalance < amount){
+            System.out.printf("Fonduri insuficiente. " + "Sold disponibil %s:: %.2f%n",currency,currentBalance);
+            return false;
+        }
+
+        //retragerea
+        double newBalance = currentBalance - amount;
+        balances.put(currency,currentBalance);
+        dailyWithdrawalUsed += amountInMDL;
+
+        addTransaction("WITHDRAWAL",amount,currency,String.format("Retragere de la cont %s",accountNumber));
+
+        System.out.printf("Retragere reusita! Sold %s actual :: %.2f%n",currency,newBalance);
+        System.out.printf("Limita zilnica utilizata :: %.2f/%.2f MDL%n",dailyWithdrawalUsed,dailyWithdrawalLimit);
+        return true;
+    }
 }
