@@ -181,4 +181,39 @@ public class BankAccount {
         System.out.printf("Limita zilnica utilizata :: %.2f/%.2f MDL%n",dailyWithdrawalUsed,dailyWithdrawalLimit);
         return true;
     }
+
+    //transfer catre alt cont
+    public boolean transferTo(BankAccount targetAccount,double amount,String currency,String description){
+        if (!isActive || !targetAccount.isActive()){
+            System.out.println("Unul dintre conturi este inactiv.");
+            return false;
+        }
+
+        if (targetAccount == this){
+            System.out.println("Nu puteti transfera catre acest cont.");
+            return false;
+        }
+
+        //retrage din contul sursa
+        if (!withdraw(amount,currency)){
+            return false;
+        }
+
+        //depune in contul tinta
+        if (!targetAccount.deposit(amount,currency)){
+            //daca depunerea esuiaza, readuce banii
+            deposit(amount,currency);
+            System.out.println("Transfer esuat. Suma a fost returnata.");
+            return false;
+        }
+
+        addTransaction("TRANSFER_OUT",amount,currency,String.format("Transfer catre %s :: %s",targetAccount.getAccountNumber(),description));
+        targetAccount.addTransaction("TRANSFER_IN",amount,currency,String.format("Transfer de la %s :: %s",accountNumber,description));
+
+        System.out.printf("Transfer reusit catre contul %s!%n",targetAccount.getAccountNumber());
+        return true;
+    }
+
+    
+
 }
