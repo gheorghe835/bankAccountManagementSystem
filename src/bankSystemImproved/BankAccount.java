@@ -145,6 +145,8 @@ public class BankAccount {
     }
 
 
+
+
     //metode private de validare
     private void validateAccountNumber(String accountNumber){
         if (accountNumber == null || accountNumber.length() != 16){
@@ -406,4 +408,93 @@ public class BankAccount {
     public int getAccountAgeInDays(){
         return Period.between(creationDate,LocalDate.now()).getDays();
     }
+
+    //metode de verificare
+
+    public boolean verifyPassword(String inputPassword){
+        return this.password.equals(inputPassword);
+    }
+    public boolean hasEnoughFunds(double amount,String currency){
+        return balances.getOrDefault(currency,0.0) >= amount;
+    }
+    public boolean isValidCurrency(String currency){
+        return SUPPORTED_CURRENCIES.contains(currency);
+    }
+
+    //metode de afisare
+
+    public void displayAccountInfo(){
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("INFORMATII CONT BANCAR");
+        System.out.println("=".repeat(50));
+        System.out.printf("Numar cont :: %s%n",accountNumber);
+        System.out.printf("Proprietar :: %s%n",ownerName);
+        System.out.printf("Data crearii :: %s%n",creationDate);
+        System.out.printf("Stare :: %s%n",isActive ? "ACTIV" : "INACTIV");
+        System.out.printf("Virsta contului :: %d zile %n",getAccountAgeInDays());
+        System.out.printf("Ultima autentificare :: %s%n",lastLogin != null ? lastLogin : "Niciodata");
+        System.out.printf("Limita retragere zilnica :: %.2f MDL (utilizat :: %.2f MDL)%n",
+                dailyWithdrawalLimit,getDailyWithdrawalUsed());
+        System.out.println("=".repeat(50));
+    }
+
+    public void displayBalances(){
+        System.out.println("\nSOLDURI CONT :: ");
+        System.out.println("-".repeat(30));
+        for (String currency : SUPPORTED_CURRENCIES){
+            double balance = balances.getOrDefault(currency,0.0);
+            if (balance > 0 || currency.equals("MDL")){
+                System.out.printf("%-5s:: %12.2f%n",currency,balance);
+            }
+        }
+        System.out.println("-".repeat(30));
+    }
+
+    public void displayTransactionHistory(int limit){
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("ISTORIC TRANZACTII ( ultimele " + limit + ").");
+        System.out.println("=".repeat(50));
+
+        if (transactionHistory.isEmpty()){
+            System.out.println("Nu exista tranzactii inregistrate.");
+            return;
+        }
+
+        int start = Math.max(0,transactionHistory.size() - limit);
+        for (int i = start; i < transactionHistory.size(); i++){
+            System.out.println(transactionHistory.get(i));
+        }
+    }
+    public void generateAccountStatement(LocalDate from,LocalDate to){
+        System.out.printf("\nSTATEMENT CONT %s(%s - %s)%n",accountNumber,from,to);
+        System.out.println("=".repeat(60));
+
+        double totalIn = 0;
+        double totalOut = 0;
+
+        for (Transaction t : transactionHistory){
+            LocalDate transDate = t.getTimestamp().toLocalDate();
+            if (!transDate.isBefore(from) && !transDate.isAfter(to)){
+                System.out.println(t);
+                if (t.getType().contains("DEPOSIT") ||
+                    t.getType().contains(TRANSFER_IN) ||
+                    t.getType().contains("INTEREST")){
+                    totalIn += t.getAmount();
+                }
+                else if (t.getType().contains("WITHDRAWAL") ||
+                         t.getType().contains("TRANSFER_OUT") ||
+                         t.getType().contains("EXCHANGE")){
+                    totalOut += t.getAmount();
+                }
+            }
+        }
+        System.out.println("=".repeat(60));
+        System.out.printf("TOTAL INTRARI :: %12.2f MDL%n",totalIn);
+        System.out.printf("TOTAL IESIRI :: %12.2f MDL%n",totalOut);
+        System.out.printf("SOLD FINAL :: %12.2f MDL\n",totalIn - totalOut);
+    }
+
+    //metode private utilitare
+    
+
 }
