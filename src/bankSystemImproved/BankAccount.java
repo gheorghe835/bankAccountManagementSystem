@@ -214,6 +214,62 @@ public class BankAccount {
         return true;
     }
 
-    
+    //schimb valutar
 
+    public boolean exchangeCurrency(String fromCurrency,String toCurrency,double amount,
+                                    Map<String,Double> exchangesRates){
+        if (!isActive){
+            System.out.println("Contul este inactiv. Contactati banca.");
+            return false;
+        }
+
+        if (!isValidCurrency(fromCurrency) || !isValidCurrency(toCurrency)){
+            System.out.println("Moneda nesuportata.");
+            return false;
+        }
+
+        if (fromCurrency.equals(toCurrency)){
+            System.out.println("Nu puteti schimba aceeasi moneda.");
+            return false;
+        }
+
+        //verifica soldul sursa
+        double fromBalance = balances.getOrDefault(fromCurrency,0.0);
+        if (fromBalance < amount){
+            System.out.printf("Fonduri insuficiente in %s. Disponibil :: %.2f%n",fromCurrency,fromBalance);
+            return false;
+        }
+
+        //calculeaza suma schimbata
+        double exchangeAmount;
+        if (fromCurrency.equals("MDL")){
+            exchangeAmount = amount / exchangesRates.get(toCurrency);
+        }
+        else if (toCurrency.equals("MDL")){
+            exchangeAmount = amount * exchangesRates.get(fromCurrency);
+        }
+        else {
+            //din valuta in valuta prin MDL
+            double amountInMDL = amount * exchangesRates.get(fromCurrency);
+            exchangeAmount = amountInMDL / exchangesRates.get(toCurrency);
+        }
+
+        //aplica comision 0.5%
+        double commission = exchangeAmount * 0.005;
+        exchangeAmount -= commission;
+
+        //efectuiaza schimbul
+        balances.put(fromCurrency,fromBalance - amount);
+        balances.put(toCurrency,balances.getOrDefault(toCurrency,0.0) + exchangeAmount);
+
+        addTransaction("EXCHANGE",amount,fromCurrency,String.format("Schimb %s->%s:: %.2f(comision :: %.4f",
+                fromCurrency,toCurrency,amount,exchangeAmount,commission));
+
+        System.out.printf("Schimb valutar reusit :: %n");
+        System.out.printf("Ai dat :: %.2f %s%n", amount,fromCurrency);
+        System.out.printf("Ai primit :: %.2f %s%n",exchangeAmount,toCurrency);
+        System.out.printf("Comision aplicat :: %.4f %s%n",commission,toCurrency);
+
+        return true;
+    }
 }
