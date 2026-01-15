@@ -3,6 +3,7 @@ package bankSystemImproved;
 import java.lang.ref.PhantomReference;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.*;
 
 public class BankAccount {
@@ -271,5 +272,53 @@ public class BankAccount {
         System.out.printf("Comision aplicat :: %.4f %s%n",commission,toCurrency);
 
         return true;
+    }
+
+    //metodele de calcul
+
+    //calculeaza soldul total in MDL
+    public double getTotalBalanceInMDL(Map<String,Double> exchangeRates)
+    {
+        double total = 0.0;
+        for (Map.Entry<String,Double> entry : balances.entrySet()){
+            String currency = entry.getKey();
+            double amount = entry.getValue();
+
+            if (currency.equals("MDL")){
+                total += amount;
+            }
+            else if (exchangeRates.containsKey(currency)){
+                total += amount * exchangeRates.get(currency);
+            }
+        }
+        return total;
+    }
+
+    //calculeaza dobinda
+    public void calculateInterest(double annualRate){
+        if (!isActive){
+            return;
+        }
+        for (Map.Entry<String,Double> entry : balances.entrySet()){
+            String currency = entry.getKey();
+            double amount = entry.getValue();
+
+            if (amount > 0){
+                double dailyRate = annualRate / 365 / 100;
+                double interest = amount * dailyRate;
+
+                balances.put(currency,amount + interest);
+
+                if (interest > 0.01){
+                    //ignora dobinzi foarte mici
+                    addTransaction("INTEREST",interest,currency,String.format("Dobinda la %.2f%% anual",annualRate));
+                }
+            }
+        }
+    }
+
+    //virsta contului in zile
+    public int getAccountAgeInDays(){
+        return Period.between(creationDate,LocalDate.now()).getDays();
     }
 }
