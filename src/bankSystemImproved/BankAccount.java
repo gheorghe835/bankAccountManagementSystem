@@ -60,6 +60,91 @@ public class BankAccount {
         this(accountNumber,password,0.0,ownerName);
     }
 
+    //getteri si setteri
+
+    public String getAccountNumber(){
+        return accountNumber;
+    }
+    public String getOwnerName(){
+        return ownerName;
+    }
+    public void setOwnerName(String ownerName){
+        if (ownerName != null && ownerName.length()){
+            this.ownerName = ownerName;
+            System.out.println("Numele a fost actualizat cu succes.");
+        }
+        else {
+            System.out.println("Numele trebuie sa aiba minimum 2 caractere.");
+        }
+    }
+    public boolean changePassword(String oldPassword,String newPassword){
+        if (!verifyPassword(oldPassword)){
+            System.out.println("Parola veche este incorecta.");
+            return false;
+        }
+        try{
+            validatePassword(newPassword);
+            this.password = newPassword;
+            addTransaction("PASSWORD_CHANGE",0,"MDL","Parola schimbata.");
+            System.out.println("Parola a fost schimbata cu succes.");
+            return true;
+        }
+        catch (IllegalArgumentException e){
+            System.out.println("Parola noua invalida :: " + e.getMessage());
+            return false;
+        }
+    }
+    public double getBalance(String currency){
+        return balances.getOrDefault(currency,0.0);
+    }
+    public Map<String,Double> getAllBalances(){
+        return new HashMap<>(balances);
+        //returnam o copie pentru siguranta
+    }
+    public LocalDate getCreationDate(){
+        return creationDate;
+    }
+    public boolean isActive(){
+        return isActive;
+    }
+    public void deactivateAccount(){
+        if (!isActive){
+            isActive = false;
+            addTransaction("ACCOUNT_DEACTIVATED",0,"MDL","Cont dezactivat");
+            System.out.println("Contul a fost dezactivat.");
+        }
+    }
+    public void reactivateAccount(){
+        if (!isActive){
+            isActive = true;
+            addTransaction("ACCOUNT_REACTIVATED",0,"MDl","Cont reactivat");
+            System.out.println("Contul a fost reactivat.");
+        }
+    }
+    public double getDailyWithdrawalLimit(){
+        return dailyWithdrawalLimit;
+    }
+    public void setDailyWithdrawalLimit(double limit){
+        if (limit >= 100){
+            dailyWithdrawalLimit = limit;
+            System.out.printf("Limita zilnica setata la %.2f MDL %n",limit);
+        }
+        else {
+            System.out.println("Limita trebuie sa fie minim de 100 MDL.");
+        }
+    }
+    public double getDailyWithdrawalUsed(){
+        resetDailyLimitIfNeeded();
+        return dailyWithdrawalUsed;
+    }
+    public LocalDateTime getLastLogin(){
+        return lastLogin;
+    }
+    public void updateLastLogin(){
+        this.lastLogin = LocalDateTime.now();
+    }
+
+
     //metode private de validare
     private void validateAccountNumber(String accountNumber){
         if (accountNumber == null || accountNumber.length() != 16){
