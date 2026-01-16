@@ -69,7 +69,7 @@ public class BankAccount {
         return ownerName;
     }
     public void setOwnerName(String ownerName){
-        if (ownerName != null && ownerName.length()){
+        if (ownerName != null && ownerName.length() >= 2){
             this.ownerName = ownerName;
             System.out.println("Numele a fost actualizat cu succes.");
         }
@@ -160,7 +160,7 @@ public class BankAccount {
 
     private void validatePassword(String password){
         if (password == null || password.length() < 6){
-            throw new IllegalArgumentException("Parola trebuie sa aiba minimum 6 caractere.")
+            throw new IllegalArgumentException("Parola trebuie sa aiba minimum 6 caractere.");
         }
 
         if (password.matches(".*\\d.*")  || !password.matches(".*[a-zA-Z].*")){
@@ -203,7 +203,7 @@ public class BankAccount {
             return false;
         }
 
-        if(!isValdCurrency(currency)){
+        if(!isValidCurrency(currency)){
             System.out.println("Moneda nesuportata :: " + currency);
             return false;
         }
@@ -477,7 +477,7 @@ public class BankAccount {
             if (!transDate.isBefore(from) && !transDate.isAfter(to)){
                 System.out.println(t);
                 if (t.getType().contains("DEPOSIT") ||
-                    t.getType().contains(TRANSFER_IN) ||
+                    t.getType().contains("TRANSFER_IN") ||
                     t.getType().contains("INTEREST")){
                     totalIn += t.getAmount();
                 }
@@ -495,6 +495,58 @@ public class BankAccount {
     }
 
     //metode private utilitare
-    
+    private void addTransaction(String type,double amount,String currency,String description){
+        Transaction transaction = new Transaction(type,amount,currency,description);
+        transactionHistory.add(transaction);
+
+        //limiteaza istoricul la ultimele 1000 de tranzactii
+        if (transactionHistory.size() > 1000){
+            transactionHistory.remove(0);
+        }
+    }
+
+    private double convertToMDL(double amount,String currency){
+        //exemplu
+        Map<String,Double> rates = Map.of("EUR",19.45,
+                                          "USD",17.80,
+                                          "GBP",22.10,
+                                          "RON",4.00);
+        if (currency.equals("MDL")){
+            return amount;
+        }
+        else if (rates.containsKey(currency)){
+            return amount * rates.get(currency);
+        }
+        return amount;//fallback
+    }
+
+    // clasa interna de tranzactii
+    private static class Transaction{
+        private final String id;
+        private final String type;
+        private final double amount;
+        private final String currency;
+        private final LocalDateTime timestamp;
+        private final String description;
+
+        public Transaction(String type,double amount,String currency,String description){
+            this.id = UUID.randomUUID().toString().substring(0,8);
+            this.type = type;
+            this.amount = amount;
+            this.currency = currency;
+            this.timestamp = LocalDateTime.now();
+            this.description = description;
+        }
+        public String getType(){return type;}
+        public double getAmount(){return amount;}
+        public String getCurrency(){return currency;}
+        public LocalDateTime getTimestamp(){return timestamp;}
+
+        @Override
+        public String toString(){
+            return String.format("%s | %-20s | %10.2f%-4s | %-25s | %s",
+                    timestamp.toLocalDate(),type,amount,currency,description,id);
+        }
+    }
 
 }
