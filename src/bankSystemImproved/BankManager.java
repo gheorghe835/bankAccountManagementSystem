@@ -223,6 +223,73 @@ public class BankManager {
     }
 
     //raport solduri totale
+    public void generateBalanceReport(Map<String,Double> exchangeRates){
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("RAPORT SOLDURI TOTALE");
+        System.out.println("=".repeat(60));
+
+        double totalMDL = 0;
+        Map<String,Double> currencyTotals = new HashMap<>();
+
+        for (BankAccount account : accounts.values()){
+            totalMDL += account.getBalance("MDL");
+
+            Map<String,Double> balances = account.getAllBalances();
+            for (Map.Entry<String,Double> entry : balances.entrySet()){
+                if (!entry.getKey().equals("MDL")){
+                    currencyTotals.merge(entry.getKey(),entry.getValue(),Double::sum);
+                }
+            }
+        }
+
+        System.out.printf("Total MDL in toate conturile :: %.2f MDL%n",totalMDL);
+        System.out.println("\nTotal valute :: ");
+        for (Map.Entry<String,Double> entry : currencyTotals.entrySet()){
+            System.out.printf("  %-5s: %12.2f(≈%.2f MDL)%n",
+                    entry.getKey(),
+                    entry.getValue(),
+                    entry.getValue() * exchangeRates.getOrDefault(entry.getKey(),1.0));
+        }
+
+        System.out.printf("\n📈 STATISTICI CONTURI ");
+        System.out.printf("  Numar total conturi :: %d%n",accounts.size());
+        System.out.printf("  Sold mediu per cont :: %.2f MDl%n",
+                totalMDL / Math.max(1,accounts.size()));
+
+        //contul cu cel mai mare sold
+        accounts.values().stream()
+                .max(Comparator.comparingDouble(acc->acc.getBalance("MDL")))
+                .ifPresent(richest->{
+                    System.out.printf("  Contul cu cel mai mare sold :: %s(%.2f MDL)%n",
+                            richest.getAccountNumber(),
+                            richest.getBalance("MDL"));
+                });
+    }
+
+    //aplica dobinda la toate conturile
+    public void applyInterestToAllAccounts(double annualRate){
+        System.out.printf("\n📈 Aplicare dobinda %.2f%% anual la toate conturile...%n", annualRate);
+
+        int affectedAccounts = 0;
+        double totalInterest = 0;
+
+        for (BankAccount account : accounts.values()){
+            if (account.isActive()){
+                double before = account.getBalance("MDL");
+                account.calculateInterest(annualRate);;
+                double after = account.getBalance("MDL");
+                double interest = after - before;
+
+                if (interest > 0.01){
+                    affectedAccounts++;
+                    totalInterest += interest;
+                }
+            }
+        }
+
+        System.out.printf("✅ Dobinda aplicata la %d conturi%n",affectedAccounts);
+        System.out.printf("\uD83D\uDCB0 Total dobinzi distribuite :: %.2f MDL%n",totalInterest);
+    }
 }
 
 
