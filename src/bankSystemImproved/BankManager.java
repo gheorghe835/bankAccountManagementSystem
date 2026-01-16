@@ -1,8 +1,7 @@
 package bankSystemImproved;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BankManager {
     private final Map<String,BankAccount> accounts;
@@ -52,4 +51,78 @@ public class BankManager {
             return false;
         }
     }
+
+    //afisare toate conyurile cu optiuni de filtrare
+    public void displayAllAccounts(){
+        if (accounts.isEmpty()){
+            System.out.println("\n\uD83D\uDCED Nu exista conturi bancare inregistrate.");
+            return;
+        }
+
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("LISTA CONTURI BANCARE (" + accounts.size() + " conturi)");
+        System.out.println("=".repeat(60));
+
+        List<BankAccount> sortedAccounts = accounts.values().stream()
+                .sorted(Comparator.comparing(BankAccount::getCreationDate))
+                .collect(Collectors.toList());
+
+        for (BankAccount account : sortedAccounts){
+            System.out.printf("┌ %-20s ────────────────────────┐%n",account.getAccountNumber());
+            System.out.printf("| Proprietar: %-48s |%n",account.getOwnerName());
+            System.out.printf("| Creat la: %-50s |%n",account.getCreationDate());
+            System.out.printf("| Stare: %-52s |%n",account.isActive() ? "🟢 ACTIV" : "🔴 INACTIV");
+            System.out.printf("| Sold MDL: %-49.2f |%n",account.getBalance("MDL"));
+            System.out.printf("└────────────────────────────────────────────────────────────────┘%n");
+        }
+
+        //statistici
+        System.out.println("\n\uD83D\uDCCA STATISTICI");
+        long activeAccounts = accounts.values().stream()
+                .filter(BankAccount::isActive)
+                .count();
+        System.out.printf("\tConturi active :: %d/%d (%.1f%%)%n",
+                activeAccounts,accounts.size(),
+                (activeAccounts * 100.0 / accounts.size()));
+
+        double totalBalance = accounts.values().stream()
+                .mapToDouble(acc->acc.getBalance("MDL"))
+                .sum();
+        System.out.printf("\tSold total MDL :: %.2f%n",totalBalance);
+    }
+
+    //cautare avansata
+    
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
