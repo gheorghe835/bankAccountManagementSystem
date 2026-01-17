@@ -16,6 +16,10 @@ public class BankManager {
         this.totalWithdrawals = 0;
     }
 
+    public void addAccount(BankAccount account){
+        accounts.put(account.getAccountNumber(),account);
+    }
+
     //adaugare cont cu validare
     public boolean addBankAccount(Scanner scanner){
         try {
@@ -55,7 +59,7 @@ public class BankManager {
     //afisare toate conyurile cu optiuni de filtrare
     public void displayAllAccounts(){
         if (accounts.isEmpty()){
-            System.out.println("\n\uD83D\uDCED Nu exista conturi bancare inregistrate.");
+            System.out.println("\n Nu exista conturi bancare inregistrate.");
             return;
         }
 
@@ -77,7 +81,7 @@ public class BankManager {
         }
 
         //statistici
-        System.out.println("\n\uD83D\uDCCA STATISTICI");
+        System.out.println("\n📊 STATISTICI");
         long activeAccounts = accounts.values().stream()
                 .filter(BankAccount::isActive)
                 .count();
@@ -99,74 +103,79 @@ public class BankManager {
         System.out.println("3. Dupa sold minim.");
         System.out.print("Alegeti optiunea :: ");
 
-        int option = scanner.nextInt();scanner.nextLine();
+        try {
 
-        switch (option){
-            case 1:
-                System.out.print("Introduceti numarul contului :: ");
-                String accNumber = scanner.nextLine();
-                BankAccount account = findAccount(accNumber);
-                if (account != null){
-                    account.displayAccountInfo();
-                    account.displayBalances();
-                }
-                else {
-                    System.out.println("❌ Contul nu a fost gasit");
-                }
-                break;
+            int option = scanner.nextInt();
+            scanner.nextLine();
 
-            case 2:
-                System.out.print("Introduceti numele proprietarului(sau parte din nume) :: ");
-                String namePart = scanner.nextLine();
-                List<BankAccount> foundByName = accounts.values().stream()
-                        .filter(acc->acc.getOwnerName().toLowerCase().contains(namePart))
-                        .collect(Collectors.toList());
-
-                if (foundByName.isEmpty()){
-                    System.out.println("❌ Nu s-au gasit conturi pentru acest nume.");
-                }
-                else {
-                    System.out.printf("n🔍 S-au gasit %d conturi :: %n",foundByName.size());
-                    for (BankAccount acc : foundByName){
-                        System.out.printf("  %s - %s(%.2f MDL)%n",
-                                acc.getAccountNumber(),
-                                acc.getCreationDate(),
-                                acc.getBalance("MDL"));
+            switch (option) {
+                case 1:
+                    System.out.print("Introduceti numarul contului :: ");
+                    String accNumber = scanner.nextLine();
+                    BankAccount account = findAccount(accNumber);
+                    if (account != null) {
+                        account.displayAccountInfo();
+                        account.displayBalances();
+                    } else {
+                        System.out.println("❌ Contul nu a fost gasit");
                     }
-                }
-                break;
+                    break;
 
-            case 3:
-                System.out.print("Introduceti soldul minim (MDL) :: ");
-                double minBalance = scanner.nextDouble();scanner.nextLine();
+                case 2:
+                    System.out.print("Introduceti numele proprietarului(sau parte din nume) :: ");
+                    String namePart = scanner.nextLine();
+                    List<BankAccount> foundByName = accounts.values().stream()
+                            .filter(acc -> acc.getOwnerName().toLowerCase().contains(namePart.toLowerCase()))
+                            .collect(Collectors.toList());
 
-                List<BankAccount> foundByBalance = accounts.values().stream()
-                        .filter(acc->acc.getBalance("MDL") >= minBalance)
-                        .sorted((a,b)->Double.compare(b.getBalance("MDL"),a.getBalance("MDL")))
-                        .collect(Collectors.toList());
-
-                if (foundByBalance.isEmpty()){
-                    System.out.println("❌ Nu exista conturi cu acest minim.");
-                }
-                else {
-                    System.out.printf("\n\uD83D\uDCB0 Conturi cu sold >= %.2f MDL ::%n",minBalance);
-                    for (BankAccount acc : foundByBalance){
-                        System.out.printf("  %s - %s:: %.2f MDL%n",
-                                acc.getAccountNumber(),
-                                acc.getOwnerName(),
-                                acc.getBalance("MDL"));
+                    if (foundByName.isEmpty()) {
+                        System.out.println("❌ Nu s-au gasit conturi pentru acest nume.");
+                    } else {
+                        System.out.printf("n🔍 S-au gasit %d conturi :: %n", foundByName.size());
+                        for (BankAccount acc : foundByName) {
+                            System.out.printf("  %s - %s(%.2f MDL)%n",
+                                    acc.getAccountNumber(),
+                                    acc.getOwnerName(),
+                                    acc.getBalance("MDL"));
+                        }
                     }
-                }
-                break;
+                    break;
 
-            default:
-                System.out.println("❌ Optiune invalida.");
+                case 3:
+                    System.out.print("Introduceti soldul minim (MDL) :: ");
+                    double minBalance = scanner.nextDouble();
+                    scanner.nextLine();
+
+                    List<BankAccount> foundByBalance = accounts.values().stream()
+                            .filter(acc -> acc.getBalance("MDL") >= minBalance)
+                            .sorted((a, b) -> Double.compare(b.getBalance("MDL"), a.getBalance("MDL")))
+                            .collect(Collectors.toList());
+
+                    if (foundByBalance.isEmpty()) {
+                        System.out.println("❌ Nu exista conturi cu acest minim.");
+                    } else {
+                        System.out.printf("\n💰 Conturi cu sold >= %.2f MDL ::%n", minBalance);
+                        for (BankAccount acc : foundByBalance) {
+                            System.out.printf("  %s - %s:: %.2f MDL%n",
+                                    acc.getAccountNumber(),
+                                    acc.getOwnerName(),
+                                    acc.getBalance("MDL"));
+                        }
+                    }
+                    break;
+
+                default:
+                    System.out.println("❌ Optiune invalida.");
+            }
+        }
+        catch (InputMismatchException e){
+            System.out.println("Va rugam introduceti un numar valid");scanner.nextLine();
         }
     }
 
     //stergere cu confirmare
     public boolean deleteAccount(Scanner scanner){
-        System.out.print("\n\uD83D\uDDD1️ Introduceti numarul contului de sters :: ");
+        System.out.print("\n🗑️ Introduceti numarul contului de sters :: ");
         String accountNumber = scanner.nextLine();
 
         BankAccount account = findAccount(accountNumber);
@@ -288,7 +297,7 @@ public class BankManager {
         }
 
         System.out.printf("✅ Dobinda aplicata la %d conturi%n",affectedAccounts);
-        System.out.printf("\uD83D\uDCB0 Total dobinzi distribuite :: %.2f MDL%n",totalInterest);
+        System.out.printf("💰 Total dobinzi distribuite :: %.2f MDL%n", totalInterest);
     }
 }
 

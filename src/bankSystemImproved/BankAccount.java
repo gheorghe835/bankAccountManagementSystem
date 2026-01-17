@@ -34,7 +34,7 @@ public class BankAccount {
     public BankAccount(String accountNumber,String password,double initialBalance,
                        String ownerName) {
         validateAccountNumber(accountNumber);
-        validatePassword(accountNumber);
+        validatePassword(password);
         validateInitialBalance(initialBalance);
 
         this.accountNumber = accountNumber;
@@ -117,7 +117,7 @@ public class BankAccount {
     public void reactivateAccount(){
         if (!isActive){
             isActive = true;
-            addTransaction("ACCOUNT_REACTIVATED",0,"MDl","Cont reactivat");
+            addTransaction("ACCOUNT_REACTIVATED",0,"MDL","Cont reactivat");
             System.out.println("Contul a fost reactivat.");
         }
     }
@@ -158,13 +158,18 @@ public class BankAccount {
         }
     }
 
-    private void validatePassword(String password){
-        if (password == null || password.length() < 6){
+    private void validatePassword(String password) {
+        if (password == null || password.length() < 6) {
             throw new IllegalArgumentException("Parola trebuie sa aiba minimum 6 caractere.");
         }
 
-        if (password.matches(".*\\d.*")  || !password.matches(".*[a-zA-Z].*")){
-            throw new IllegalArgumentException("Parola trebuie sa contina litere si cifre.");
+        // Verifică dacă conține cifre
+        boolean hasDigit = password.matches(".*\\d.*");
+        // Verifică dacă conține litere
+        boolean hasLetter = password.matches(".*[a-zA-Z].*");
+
+        if (!hasDigit || !hasLetter) {
+            throw new IllegalArgumentException("Parola trebuie sa contina atat litere cat si cifre.");
         }
     }
 
@@ -198,7 +203,7 @@ public class BankAccount {
     //Deunere
 
     public boolean deposit(double amount,String currency){
-        if (isActive){
+        if (!isActive){
             System.out.println("Contul este inactiv. Contactati banca.");
             return false;
         }
@@ -216,7 +221,7 @@ public class BankAccount {
         double newBalance = balances.get(currency) + amount;
         balances.put(currency,newBalance);
 
-        addTransaction("Deposit",amount,currency,String.format("Depunere in cont %s",accountNumber));
+        addTransaction("DEPOSIT",amount,currency,String.format("Depunere in cont %s",accountNumber));
 
         System.out.printf("Depunere reusita! Sold %s actual :: %.2f%n",currency,newBalance);
 
@@ -260,7 +265,7 @@ public class BankAccount {
 
         //retragerea
         double newBalance = currentBalance - amount;
-        balances.put(currency,currentBalance);
+        balances.put(currency,newBalance);
         dailyWithdrawalUsed += amountInMDL;
 
         addTransaction("WITHDRAWAL",amount,currency,String.format("Retragere de la cont %s",accountNumber));
@@ -465,33 +470,41 @@ public class BankAccount {
             System.out.println(transactionHistory.get(i));
         }
     }
-    public void generateAccountStatement(LocalDate from,LocalDate to){
-        System.out.printf("\nSTATEMENT CONT %s(%s - %s)%n",accountNumber,from,to);
+    public void generateAccountStatement(LocalDate from, LocalDate to, Map<String, Double> exchangeRates) {
+        System.out.printf("\nSTATEMENT CONT %s(%s - %s)%n", accountNumber, from, to);
         System.out.println("=".repeat(60));
 
         double totalIn = 0;
         double totalOut = 0;
 
-        for (Transaction t : transactionHistory){
+        for (Transaction t : transactionHistory) {
             LocalDate transDate = t.getTimestamp().toLocalDate();
-            if (!transDate.isBefore(from) && !transDate.isAfter(to)){
+            if (!transDate.isBefore(from) && !transDate.isAfter(to)) {
                 System.out.println(t);
-                if (t.getType().contains("DEPOSIT") ||
-                    t.getType().contains("TRANSFER_IN") ||
-                    t.getType().contains("INTEREST")){
-                    totalIn += t.getAmount();
+
+                double amountInMDL = t.getAmount();
+
+                // Converteste in MDL daca nu e MDL
+                if (!t.getCurrency().equals("MDL") && exchangeRates != null) {
+                    amountInMDL = t.getAmount() * exchangeRates.getOrDefault(t.getCurrency(), 1.0);
                 }
-                else if (t.getType().contains("WITHDRAWAL") ||
-                         t.getType().contains("TRANSFER_OUT") ||
-                         t.getType().contains("EXCHANGE")){
-                    totalOut += t.getAmount();
+
+                if (t.getType().contains("DEPOSIT") ||
+                        t.getType().contains("TRANSFER_IN") ||
+                        t.getType().contains("INTEREST")) {
+                    totalIn += amountInMDL;
+                } else if (t.getType().contains("WITHDRAWAL") ||
+                        t.getType().contains("TRANSFER_OUT") ||
+                        t.getType().contains("EXCHANGE")) {
+                    totalOut += amountInMDL;
                 }
             }
         }
+
         System.out.println("=".repeat(60));
-        System.out.printf("TOTAL INTRARI :: %12.2f MDL%n",totalIn);
-        System.out.printf("TOTAL IESIRI :: %12.2f MDL%n",totalOut);
-        System.out.printf("SOLD FINAL :: %12.2f MDL\n",totalIn - totalOut);
+        System.out.printf("TOTAL INTRARI :: %12.2f MDL%n", totalIn);
+        System.out.printf("TOTAL IESIRI :: %12.2f MDL%n", totalOut);
+        System.out.printf("SOLD FINAL :: %12.2f MDL\n", totalIn - totalOut);
     }
 
     //metode private utilitare
